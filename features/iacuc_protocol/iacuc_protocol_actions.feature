@@ -1,4 +1,4 @@
-@IACUC
+@iacuc
 Feature: Protocol actions for IACUC
 
   [KCIAC-256] IACUC Admin can suspend, terminate, expire and withdrawal IACUC protocols
@@ -33,6 +33,7 @@ Feature: Protocol actions for IACUC
     Given the IACUC Protocol Creator submits an IACUC Protocol for admin review
     When  the IACUC Administrator withdrawals the IACUC Protocol
     Then  the IACUC Protocol submission status should be Withdrawn
+     #object disabled =  protocol button
 
   @KCTEST-881
   Scenario: Verify the expiration date is set after the IACUC Protocol is approved
@@ -40,10 +41,11 @@ Feature: Protocol actions for IACUC
     When  the IACUC Administrator approves the IACUC Protocol
     Then  the expiration date is set for the Protocol
 
-  @KC-TA-5417
+  @KC-TA-5417 @wip
   Scenario: IACUC Admin deactivates an IACUC Protocol
     Given the IACUC Administrator approves a submitted IACUC Protocol
     When  the IACUC Administrator deactivates the IACUC Protocol
+    And   the IACUC Administrator deactivates the IACUC Protocol
     Then  the IACUC Protocol status should be Deactivated
 
   @KC-TA-5417

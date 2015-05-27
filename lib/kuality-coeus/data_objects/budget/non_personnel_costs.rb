@@ -4,7 +4,7 @@ class NonPersonnelCost < DataFactory
 
   attr_reader :category_type, :category_code, :object_code_name, :total_base_cost,
               :cost_sharing, :start_date, :end_date, :rates, :apply_inflation, :submit_cost_sharing,
-              :on_campus, :ird,
+              :on_campus, :ird, :apply_indirect_rates,
               #TODO someday:
               :quantity, :description # These don't seem to do anything, really
   attr_accessor :participants
@@ -46,6 +46,13 @@ class NonPersonnelCost < DataFactory
       page.loading
       #FIXME!
       sleep 1
+      # This is needed here because the object code name select list can be very large.
+      # When a select list is too large then Watir is very slow parsing its contents.
+      # This line bypasses Watir in favor of using nokogiri to parse the HTML and get
+      # the list of options.
+      if @object_code_name=='::random::'
+        @object_code_name=page.object_code_list.shuffle.sample
+      end
       fill_out page, :object_code_name, :total_base_cost
       page.add_non_personnel_item
     end
@@ -68,7 +75,7 @@ class NonPersonnelCost < DataFactory
       @overhead = page.rates_table.exist?
       if @overhead && !opts[:apply_indirect_rates].nil?
         page.rates_tab
-        page.apply(@rates.f_and_a[0].rate_class_code, @rates.f_and_a[0].rate_class_type).fit opts[:apply_indirect_rates]
+        page.apply(@rates.f_and_a[0].rate_class_code, @rates.f_and_a[0].description).fit opts[:apply_indirect_rates]
       end
       update_options opts
       get_rates
@@ -107,7 +114,7 @@ class NonPersonnelCost < DataFactory
       page.save_changes
     end
   end
-
+  
   def sync_to_period_c_limit
     # Method assumes we're already in the right place
     on(NonPersonnelCosts).details_of @object_code_name
@@ -124,7 +131,7 @@ class NonPersonnelCost < DataFactory
       page.save_and_apply_to_other_periods
     end
   end
-
+  
   def daily_total_base_cost
     @total_base_cost.to_f/total_days
   end
@@ -210,6 +217,10 @@ class NonPersonnelCost < DataFactory
     npc
   end
 
+  def update_from_parent(period_number)
+    @period_number=period_number
+  end
+
   private
 
   def calc_cost(cost_type)
@@ -236,7 +247,24 @@ class NonPersonnelCostsCollection < CollectionFactory
   end
 
   def f_and_a
-    self.collect{ |npc| npc.f_and_a }.inject(0, :+)
+    self.find_all{ |npc|
+      Transforms::YES_NO[npc.apply_indirect_rates]=='Yes' }.
+        collect{ |npc|
+          npc.f_and_a }.
+        inject(0, :+)
+  end
+
+  def unrecovered_f_and_a
+    self.find_all{ |npc|
+      Transforms::YES_NO[npc.apply_indirect_rates]=='No' }.
+        collect{ |npc|
+          npc.f_and_a }.
+        inject(0, :+)
+  end
+
+  def cost_sharing
+    self.collect{ |npc| npc.cost_sharing.to_f }.inject(0, :+) +
+        self.collect{ |npc| npc.f_and_a_cost_sharing }.inject(0, :+)
   end
 
   # NOTE: This method is written assuming that there's only one item
@@ -252,6 +280,8 @@ class NonPersonnelCostsCollection < CollectionFactory
     self.find { |np_item| np_item.object_code_name==obcdnm }
   end
 
+  # NOTE: This method is written assuming that there's only one item
+  # with this object code in the collection...
   def delete(obcdnm)
     object_code_name(obcdnm).delete
     self.delete_if { |np_item| np_item.object_code_name==obcdnm }

@@ -1,7 +1,5 @@
 class BudgetPersonnel < BasePage
 
-  expected_element :sync_from_proposal_element
-
   document_buttons
   buttons 'Add Personnel', 'Sync from Proposal'
 
@@ -12,7 +10,7 @@ class BudgetPersonnel < BasePage
     b.personnel_rows.each { |row|
       items << {
           person:           row.td.text[/^.*(?=\s\()/],
-          role:             row.td.span.text[/\w+/],
+          role:             row.td(index: 1).text[/^.*(?=\s\()/],
           job_code:         row.td(index: 1).span.text[/(?<=\()\w+/],
           appointment_type: row.td(index: 2).text.strip,
           base_salary:      row.td(index: 3).text.strip

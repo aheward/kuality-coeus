@@ -214,7 +214,6 @@ class ProposalDevelopmentObject < DataFactory
 
   def submit(type=:s)
 
-    DEBUG.pause 100
 
     types={
         s:            :submit,
@@ -233,26 +232,21 @@ class ProposalDevelopmentObject < DataFactory
           lookup.open_result @document_id
         end
         view 'Summary/Submit'
-        DEBUG.message 'Submit to sponsor not displayed submitting for review'
         unless on(ProposalSummary).submit_to_sponsor_element.exists?
           on(ProposalSummary).submit_for_review
           view 'Summary/Submit'
-          DEBUG.message 'submit second time'
         end
         unless on(ProposalSummary).submit_to_sponsor_element.exists?
           on(ProposalSummary).submit_for_review
           view 'Summary/Submit'
-          DEBUG.message 'submit third time'
         end
         unless on(ProposalSummary).submit_to_sponsor_element.exists?
           on(ProposalSummary).submit_for_review
           view 'Summary/Submit'
-          DEBUG.message 'submit 4th time'
         end
         unless on(ProposalSummary).submit_to_sponsor_element.exists?
           on(ProposalSummary).submit_for_review
           view 'Summary/Submit'
-          DEBUG.message 'submit 5th time'
         end
         on(ProposalSummary).submit_to_sponsor
         on SendNotifications do |page|
@@ -272,7 +266,6 @@ class ProposalDevelopmentObject < DataFactory
       else
         view 'Summary/Submit'
         on(ProposalSummary).submit_for_review
-        DEBUG.message "Submit for review"
         @status=on(NewDocumentHeader).document_status
     end
   end
@@ -318,8 +311,6 @@ class ProposalDevelopmentObject < DataFactory
     on(ActionList).filter
     on ActionListFilter do |page|
       page.document_title.set @project_title[0..18]
-      DEBUG.message "#{@project_title[0..18]}"
-      # DEBUG.pause(123)
       page.filter
     end
     on(ActionList).open_item(@document_id)
@@ -373,9 +364,6 @@ class ProposalDevelopmentObject < DataFactory
         there = false
       end
       unless there
-
-        # TODO: Need this to be more robust. What if you're in the 5.2 UI? This can't
-        # navigate from there...
         visit Landing
         on(Header).doc_search
         on DocumentSearch do |lookup|

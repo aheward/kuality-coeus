@@ -3,14 +3,13 @@ class BudgetPeriodObject < DataFactory
   include StringFactory, Utilities
 
   attr_reader :start_date, :end_date,
-              :unrecovered_f_and_a,
               :cost_sharing,
               :cost_limit, :direct_cost_limit, :datified,
               :budget_name, :cost_sharing_distribution_list,
-              :participant_support, :assigned_personnel, :non_personnel_costs, :period_rates
+              :participant_support, :assigned_personnel, :non_personnel_costs, :period_rates,
+              :number
               #TODO: Add support for this:
               :number_of_participants
-  attr_accessor :number
 
   def initialize(browser, opts={})
     @browser = browser
@@ -62,6 +61,7 @@ class BudgetPeriodObject < DataFactory
   # TODO: All this code is problematic when there are multiple
   # Project periods. It needs some serious re-thinking for 6.0
   def add_item_to_cost_sharing_dl opts={}
+    warn 'This cost sharing method must be refactored.'
     defaults = {
         amount: random_dollar_value(10000),
         period: "#{@number}: #{@start_date} - #{@end_date}"
@@ -77,9 +77,9 @@ class BudgetPeriodObject < DataFactory
       page.assign_personnel @number
     end
     defaults = {
-        period_rates: @period_rates
+        period_number: @number
     }
-    @assigned_personnel.add defaults.merge(opts)
+    @assigned_personnel.add personnel_rates, defaults.merge(opts)
   end
 
   def assign_non_personnel_cost opts={}
@@ -114,6 +114,15 @@ class BudgetPeriodObject < DataFactory
     on(PeriodsAndTotals).delete_period(@number)
   end
 
+  def get_dollar_field_values
+    view 'Periods And Totals'
+    on PeriodsAndTotals do |page|
+      dollar_fields.each do |field|
+        set(field, page.send("#{field}_of", @number).value)
+      end
+    end
+  end
+
   def dollar_fields
     [:total_sponsor_cost, :direct_cost, :f_and_a_cost, :unrecovered_f_and_a,
                    :cost_sharing, :cost_limit, :direct_cost_limit]
@@ -129,7 +138,7 @@ class BudgetPeriodObject < DataFactory
 
   def direct_cost
     if @direct_cost.nil?
-      non_personnel_costs.direct.round(2) #+ assigned_personnel.direct
+      non_personnel_costs.direct + assigned_personnel.direct_costs[:cost]
     else
       @direct_cost
     end
@@ -137,9 +146,25 @@ class BudgetPeriodObject < DataFactory
 
   def f_and_a_cost
     if @f_and_a_cost.nil?
-      non_personnel_costs.f_and_a.round(2) #+ assigned_personnel.f_and_a
+      non_personnel_costs.f_and_a #+ assigned_personnel.f_and_a
     else
       @f_and_a_cost
+    end
+  end
+
+  def cost_sharing
+    if @cost_sharing.nil?
+      non_personnel_costs.cost_sharing + assigned_personnel.direct_costs[:cost_sharing]
+    else
+      @cost_sharing
+    end
+  end
+
+  def unrecovered_f_and_a
+    if @unrecovered_f_and_a.nil?
+      non_personnel_costs.unrecovered_f_and_a #+ assigned_personnel.unrecovered_f_and_a
+    else
+      @unrecovered_f_and_a
     end
   end
 
@@ -153,6 +178,18 @@ class BudgetPeriodObject < DataFactory
 
   def get_rates(budget_rates)
     @period_rates = budget_rates.in_range(start_date_datified, end_date_datified)
+  end
+
+  def update_number number
+    @number=number
+    notify_collections number
+  end
+
+  def personnel_rates
+    prs = @period_rates.personnel
+    prs << @period_rates.inflation
+    prs << @period_rates.f_and_a
+    prs.flatten
   end
 
   # =======
@@ -181,7 +218,8 @@ class BudgetPeriodsCollection < CollectionsFactory
   # based on their start date values.
   def number!
     self.sort_by! { |period| period.start_date_datified }
-    self.each_with_index { |period, index| period.number=index+1 }
+    self.each_with_index { |period, index|
+      period.update_number index+1 }
   end
 
   def total_sponsor_cost

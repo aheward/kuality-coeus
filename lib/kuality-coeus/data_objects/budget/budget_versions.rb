@@ -168,31 +168,46 @@ class BudgetVersionsObject < DataFactory
   def autocalculate_periods
     view :periods_and_totals
     on(PeriodsAndTotals).autocalculate_periods
+    on(ConfirmAutocalculate).yes
     @budget_periods[1..-1].each_with_index do |period, i|
       @budget_periods[i].non_personnel_costs.each do |npc|
-        period.copy_non_personnel_item(npc)
-        warn 'Must add the copying of personnel items to the autocalculate periods method!'
+        period.copy_non_personnel_item npc
+      end
+      @budget_periods[0].assigned_personnel.each do |person|
+
       end
     end
   end
 
   def complete
+    raise 'This method is currently failing because of how the OK button responds to the click'
+    # FIXME: For whatever reason, the clicking of the OK button short-circuits the system
+    # being able to mark the budget complete.
     view 'Periods And Totals'
-    on(PeriodsAndTotals).complete_budget
-    on CompleteBudget do |page|
-      page.ready.set
-      page.ok
+
+    while on(PeriodsAndTotals).complete_budget_element.present?
+      on(PeriodsAndTotals).complete_budget
+      on CompleteBudget do |page|
+        page.ready.set
+        page.ok
+      end
+      on(PeriodsAndTotals).loading
+      DEBUG.pause 30
+
+      visit Logout
+      visit Login do |log_in|
+        log_in.username.set $current_user.user_name
+        log_in.login
+      end
+      on(Header).doc_search_link.wait_until_present
+      view 'Periods And Totals'
+
+      DEBUG.message x
+      x += 1
+
     end
 
-
-
-
-
-    raise 'There is currently a refresh issue, here. The Budget may not actually be "complete", yet.'
-
-
-
-
+    DEBUG.message
 
   end
 

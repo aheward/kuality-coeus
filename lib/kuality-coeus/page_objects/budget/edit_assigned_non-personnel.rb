@@ -1,7 +1,5 @@
 class EditAssignedNonPersonnel < BasePage
 
-  expected_element :modal_div
-
   buttons 'Save Changes', 'Save And Apply To Other Periods',
           'Sync To Period Direct Cost Limit', 'Sync To Period Cost Limit'
 

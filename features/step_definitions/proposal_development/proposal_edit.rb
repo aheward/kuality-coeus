@@ -35,7 +35,7 @@ end
 
 Then /^The S2S opportunity search should become available$/ do
   @proposal.view 'S2S Opportunity Search'
-  expect{on(S2S).find_opportunity_button}.to be_present
+  expect(on(S2S).find_opportunity_button).to be_present
 end
 
 When /^The Proposal's 'Future Action Requests' should include 'PENDING APPROVE' for the principal investigator$/ do
@@ -47,12 +47,6 @@ When /^The Proposal's 'Future Action Requests' should include 'PENDING APPROVE' 
     page.show_future_action_requests
     page.requested_action_for(name).should=="PENDING\nAPPROVE"
   end
-end
-
-When /^I? ?push the Proposal's project start date ahead (\d+) years?$/ do |year|
-  new_year=@proposal.project_start_date[/\d+$/].to_i+year.to_i
-  new_date="#{@proposal.project_start_date[/^\d+\/\d+/]}/#{new_year}"
-  @proposal.edit project_start_date: new_date
 end
 
 When /(the Proposal Creator |)pushes the Proposal end date (\d+) more years?$/ do |usr, year|
