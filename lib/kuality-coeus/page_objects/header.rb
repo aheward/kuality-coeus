@@ -39,6 +39,7 @@ class Header < BasePage
     }
 
   action(:action_list) { |b| b.link(text: 'Action List').click }
+  action(:system_admin) { |b| b.link(title: 'System Admin').click }
 
   # Has same visible problems as researcher
   # action(:central_admin) { |b|
