@@ -174,3 +174,8 @@ Then /^(the (.*) |)approves the Protocol$/ do |text, role_name|
   steps %{* I log in with the #{role_name} user } unless text ==''
   @iacuc_protocol.approve
 end
+
+Then /^(the (.*) |)(can | )creates? an amendment for the IACUC Protocol$/ do |text, role_name, x|
+  steps %{ * log in with the #{role_name} user } unless text == ''
+  @iacuc_protocol.add_amendment
+end

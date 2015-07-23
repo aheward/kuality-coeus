@@ -177,7 +177,6 @@ class IACUCProtocolObject < DataFactory
       # TODO: Someday make this more involved than just submitting.
       page.submit
     end
-
   end
 
   def admin_approve_amendment

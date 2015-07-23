@@ -19,11 +19,16 @@ Feature: Protocol actions for IACUC Designated Member Review
   Scenario: Submitted IACUC Protocols cannot be deleted
     Then  the IACUC Administrator cannot delete the Protocol
 
-  Scenario: Create an IACUC Protocol Amendment
+  Scenario: Approve an IACUC Protocol
     Given the IACUC Administrator assigns committee members to review the submission
     When  the IACUC Administrator approves the Protocol
     Then  the IACUC Protocol status should be Active
     And   the IACUC Protocol submission status should be Approved
+  @test
+  Scenario: Create an IACUC Protocol Amendment
+    Given the IACUC Administrator assigns committee members to review the submission
+    And   the IACUC Administrator approves the Protocol
+    Then  the IACUC Administrator can create an amendment for the IACUC Protocol
   @wip
   Scenario: Verify the expiration date is set after the IACUC Protocol is approved
     Then  the expiration date is set for the Protocol
