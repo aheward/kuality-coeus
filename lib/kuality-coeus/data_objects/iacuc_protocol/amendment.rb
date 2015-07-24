@@ -9,7 +9,7 @@ class IACUCAmendmentObject < DataFactory
 
     defaults = {
         summary: random_alphanums_plus,
-        sections: SECTIONS.shuffle[0..2]
+        sections: CreateAmendment::SECTIONS.shuffle[0..2]
     }
 
     set_options(defaults.merge(opts))
@@ -23,28 +23,19 @@ class IACUCAmendmentObject < DataFactory
       @sections.each do |sect|
         page.amend(sect).set
       end
-
-
-
-      DEBUG.pause 9861
-
-
-
       page.create
     end
     confirmation
     on(NotificationEditor).send_it if on(NotificationEditor).send_button.present?
-    on(CreateAmendment).save
+    on IACUCProtocolActions do |page|
+      @amendment_number = page.headerinfo_table.to_a
 
-    @amendment[:protocol_number] = @doc[:protocol_number]
-    @amendment[:document_id] = @doc[:document_id]
 
-    @document_id = on(IACUCProtocolActions).document_id
+      DEBUG.inspect @amendment_number
+      DEBUG.pause 5082
 
+      @document_id = page.document_id
+    end
   end
-
-  SECTIONS = ['General Info', 'Funding Source', 'Protocol References and Other Identifiers',
-              'Protocol Organizations', 'Questionnaire', 'General Info',
-              'Areas of Research', 'Special Review', 'Protocol Personnel', 'Others']
 
 end
