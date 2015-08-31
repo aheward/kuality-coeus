@@ -19,5 +19,4 @@ class KcPersonLookup < Lookups
   # stop working properly.
   value(:returned_full_names) { |b| b.noko.table(id: 'row').rows.collect{ |row| row[FULL_NAME].text }.tap(&:shift).delete_if{ |name| name==" " } }
   value(:returned_user_names) { |b| b.noko.table(id: 'row').rows.collect{ |row| row[USER_NAME].text }.tap(&:shift) }
-
 end
