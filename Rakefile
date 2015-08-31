@@ -73,7 +73,7 @@ end
 def zen_garden(space, task)
   decapitate
   rr = 'rerun.txt'
-  remove_files rr, 'cucumber.json', 'cucumber_clean.json', 'cucumber_fix.json', 'screenshot.png', 'rerun.json', 'first_run.json'
+  remove_files rr, 'cucumber.json', 'clean.json', 'screenshot.png', 'rerun.json', 'first_run.json'
   rescued = false
   begin
     Rake::Task["#{space}:#{task}"].invoke
